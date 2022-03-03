@@ -4,6 +4,7 @@ import { varnum } from "https://deno.land/std@0.88.0/encoding/binary.ts";
 import { equals } from "https://deno.land/std@0.88.0/bytes/mod.ts";
 import { parse } from "https://deno.land/std@0.88.0/flags/mod.ts";
 import { concat } from "https://deno.land/std@0.88.0/bytes/mod.ts";
+import { join } from "https://deno.land/std@0.88.0/path/mod.ts";
 
 if (Deno.args.length == 0 || !Deno.args[0].startsWith("brook://")) {
     console.log("$ testbrook 'brook://...'");
@@ -11,10 +12,8 @@ if (Deno.args.length == 0 || !Deno.args[0].startsWith("brook://")) {
 }
 
 var p = Deno.run({
-    cmd: ["sh", "-c", `which brook`],
-    stdout: "piped",
+    cmd: ["sh", "-c", `'${join(Deno.env.get("HOME"), ".nami", "bin", "brook")}' -v`],
 });
-var s0 = new TextDecoder("utf-8").decode(await p.output()).trim();
 var s = await p.status();
 p.close();
 if (s.code != 0) {
@@ -25,7 +24,7 @@ if (s.code != 0) {
 var bp;
 var brook = async () => {
     console.log("Starting brook");
-    var c = `'${s0}' connect --link '${Deno.args[0]}' --socks5 127.0.0.1:10800`;
+    var c = `'${join(Deno.env.get("HOME"), ".nami", "bin", "brook")}' connect --link '${Deno.args[0]}' --socks5 127.0.0.1:10800`;
     bp = Deno.run({
         cmd: ["sh", "-c", c],
     });
@@ -37,7 +36,7 @@ var stopbrook = async () => {
     console.log("Stopping brook");
     try {
         bp.kill(Deno.Signal.SIGTERM);
-	bp.close();
+        bp.close();
         await new Promise((r) => setTimeout(r, 3000));
     } catch (e) {}
 };
