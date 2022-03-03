@@ -12,9 +12,11 @@ if (Deno.args.length == 0 || !Deno.args[0].startsWith("brook://")) {
 
 var p = Deno.run({
     cmd: ["sh", "-c", `which brook`],
-    stdout: "null",
+    stdout: "piped",
 });
+var s0 = new TextDecoder("utf-8").decode(await p.output()).trim();
 var s = await p.status();
+p.close();
 if (s.code != 0) {
     console.log(red(`Please install brook CLI first, such as: $ nami install brook`));
     Deno.exit(s.code);
@@ -23,7 +25,7 @@ if (s.code != 0) {
 var bp;
 var brook = async () => {
     console.log("Starting brook");
-    var c = `brook connect --link '${Deno.args[0]}' --socks5 127.0.0.1:10800`;
+    var c = `'${s0}' connect --link '${Deno.args[0]}' --socks5 127.0.0.1:10800`;
     bp = Deno.run({
         cmd: ["sh", "-c", c],
     });
@@ -35,6 +37,7 @@ var stopbrook = async () => {
     console.log("Stopping brook");
     try {
         bp.kill(Deno.Signal.SIGTERM);
+	bp.close();
         await new Promise((r) => setTimeout(r, 3000));
     } catch (e) {}
 };
